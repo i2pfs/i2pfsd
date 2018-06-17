@@ -1,7 +1,7 @@
 package misc
 
 import (
-	"github.com/i2pfs/i2pfsd/log"
+	"github.com/xaionaro-go/log"
 )
 
 func CheckError(err error) {

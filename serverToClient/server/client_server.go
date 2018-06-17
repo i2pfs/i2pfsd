@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/i2pfs/i2pfsd/i2p"
-	"github.com/i2pfs/i2pfsd/log"
+	"github.com/xaionaro-go/log"
 	"github.com/i2pfs/i2pfsd/protobuf/generated"
 	"github.com/i2pfs/i2pfsd/serverToClient/protobuf/generated"
 )

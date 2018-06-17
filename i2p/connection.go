@@ -1,9 +1,9 @@
 package i2p
 
 import (
-	"fmt"
 	"github.com/i2pfs/i2pfsd/consts"
-	"github.com/i2pfs/i2pfsd/log"
+	"github.com/xaionaro-go/log"
+	"github.com/xaionaro-go/errors"
 	"net"
 )
 
@@ -66,5 +66,5 @@ func (conn *connection) Close() error {
 }
 
 func (conn *connection) SendMessage(msg interface{}) error {
-	return fmt.Errorf("Not implemented, yet")
+	return errors.NotImplemented
 }

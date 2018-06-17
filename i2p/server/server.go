@@ -1,13 +1,17 @@
 package server
 
 import (
+	"bufio"
+	"os"
+
 	"github.com/i2pfs/i2pfsd/i2p"
-	"github.com/i2pfs/i2pfsd/log"
 	"github.com/i2pfs/i2pfsd/misc"
 	pb "github.com/i2pfs/i2pfsd/protobuf/generated"
 	cServer "github.com/i2pfs/i2pfsd/serverToClient/server"
 	"github.com/i2pfs/i2pfsd/serverToServer/server"
 	"github.com/majestrate/i2p-tools/sam3"
+	"github.com/xaionaro-go/errors"
+	"github.com/xaionaro-go/log"
 )
 
 func helloMessageHandler(conn i2p.Connection, buf []byte) error {
@@ -41,27 +45,71 @@ func handleListener(listener *sam3.StreamListener) {
 	}
 }
 
-func Start(samUrl, keysFilePath string) error {
+func peersFileAddAddr(peersFilePath string, addr sam3.I2PAddr) error {
+	addrString := addr.Base32()
+
+	file, err := os.Open(peersFilePath)
+	if err == nil {
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			peerAddress := scanner.Text()
+			if peerAddress == addrString {
+				file.Close()
+				return nil
+			}
+		}
+		file.Close()
+
+		if err = scanner.Err(); err != nil {
+			return errors.CannotParseFile.SetArgs("peersFileAddAddr", err)
+		}
+	}
+
+	f, err := os.OpenFile(peersFilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return errors.CannotOpenFile.SetArgs("peersFileAddAddr[append]", peersFilePath, err)
+	}
+	defer f.Close()
+
+	text := addrString+"\n"
+	if _, err = f.WriteString(text); err != nil {
+		return errors.CannotWriteToFile.SetArgs("peersFileAddAddr", peersFilePath, err, text)
+	}
+
+	return nil
+}
+
+func Start(samUrl, peersFilePath, keysFilePath string) error {
 	log.Debugln("Server: NewSAM")
 	sam, err := sam3.NewSAM(samUrl)
 	if err != nil {
-		return err
+		return errors.UnableToConnect.SetArgs("i2p/server/server.go:Start():NewSAM()", err, samUrl)
 	}
+
 	log.Debugln("Server: EnsureKeyfile")
 	keys, err := sam.EnsureKeyfile(keysFilePath)
 	if err != nil {
-		return err
+		return errors.UnableToGetKey.SetArgs("i2p/server/server.go:Start():EnsureKeyfile()", err, keysFilePath)
 	}
+
 	log.Debugln("Server: NewStreamSession")
-	stream, err := sam.NewStreamSession("i2pfsd", keys, sam3.Options_Medium)
+	streamSession, err := sam.NewStreamSession("i2pfsd", keys, sam3.Options_Medium)
 	if err != nil {
-		return err
+		return errors.UnableToStartSession.SetArgs("i2p/server/server.go:Start():NewStreamSession()", err)
 	}
+
+	log.Debugln("Server: Adding me to the peers file if I'm not there")
+	err = peersFileAddAddr(peersFilePath, streamSession.Addr())
+	if err != nil {
+		return errors.CannotWriteToFile.SetArgs("i2p/server/server.go:Start():peersFileAddAddr()", err, peersFilePath, streamSession.Addr())
+	}
+
 	log.Debugln("Server: Listen")
-	listener, err := stream.Listen()
+	listener, err := streamSession.Listen()
 	if err != nil {
-		return err
+		return errors.UnableToListen.SetArgs("i2p/server/server.go:Start():Listen()", err)
 	}
+
 	go handleListener(listener)
 	return nil
 }
