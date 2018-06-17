@@ -1,29 +1,59 @@
 package server
 
 import (
+	"net"
+
 	"github.com/i2pfs/i2pfsd/log"
 	"github.com/i2pfs/i2pfsd/misc"
+	"github.com/i2pfs/i2pfsd/serverToServer/protobuf/generated"
 	"github.com/majestrate/i2p-tools/sam3"
 )
 
-func Run(samUrl, keysFilePath string) {
+func handleConnection(connection net.Conn) {
+	for {
+		buf := make([]byte, 4096)
+		log.Debugln("Server Connection: Read")
+		n, err := connection.Read(buf)
+		misc.CheckError(err)
+		log.Debugln("Server Connection: received: " + string(buf[:n]))
+		message := s2sProtobuf.Message{}
+		err = message.Unmarshal(buf[:n])
+		misc.CheckError(err)
+		log.Debugln("Server Connection: received message: ", message)
+	}
+}
+
+func handleListener(listener *sam3.StreamListener) {
+	for {
+		log.Debugln("Server Listener: Accept()...")
+		conn, err := listener.Accept()
+		misc.CheckError(err)
+		log.Debugln("Server Listener: new connection")
+		go handleConnection(conn)
+	}
+}
+
+func Start(samUrl, keysFilePath string) error {
 	log.Debugln("Server: NewSAM")
 	sam, err := sam3.NewSAM(samUrl)
-	misc.CheckError(err)
-	log.Debugln("Server: NewKeys")
-	keys, err := sam.NewKeys()
-	misc.CheckError(err)
+	if err != nil {
+		return err
+	}
+	log.Debugln("Server: EnsureKeyfile")
+	keys, err := sam.EnsureKeyfile(keysFilePath)
+	if err != nil {
+		return err
+	}
 	log.Debugln("Server: NewStreamSession")
-	stream, err := sam.NewStreamSession("serverTun1", keys, sam3.Options_Medium)
-	misc.CheckError(err)
+	stream, err := sam.NewStreamSession("i2pfsd-s2s-s", keys, sam3.Options_Medium)
+	if err != nil {
+		return err
+	}
 	log.Debugln("Server: Listen")
 	listener, err := stream.Listen()
-	misc.CheckError(err)
-	log.Debugln("Server: Accept")
-	conn, err := listener.Accept()
-	misc.CheckError(err)
-	buf := make([]byte, 4096)
-	log.Debugln("Server: Read")
-	n, err := conn.Read(buf)
-	log.Debugln("Server received: " + string(buf[:n]))
+	if err != nil {
+		return err
+	}
+	go handleListener(listener)
+	return nil
 }

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package s2sProtobuf;
+
+enum ErrorType {
+	AccessDenied = 0;
+};
+
+message Error {
+	int64 MessageId = 1;
+	ErrorType Type = 2;
+	string Description = 3;
+}

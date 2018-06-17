@@ -1,0 +1,19 @@
+syntax = "proto3";
+package s2sProtobuf;
+
+import "error.protobuf";
+import "ping.protobuf";
+import "pong.protobuf";
+import "join.protobuf";
+import "joined.protobuf";
+
+message Message {
+	int64 Id = 1;
+	oneof Message {
+		Error Error = 2;
+		Ping Ping = 3;
+		Pong Pong = 4;
+		Join Join = 5;
+		Joined Joined = 6;
+	};
+}
