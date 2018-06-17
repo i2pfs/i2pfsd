@@ -1,0 +1,6 @@
+package consts
+
+const (
+	FILE_BLOCKSIZE   = 65536
+	MESSAGE_MAX_SIZE = FILE_BLOCKSIZE + 65536
+)

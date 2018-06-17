@@ -1,0 +1,11 @@
+syntax = "proto3";
+package helloProtobuf;
+
+enum ConnectionType {
+	Server = 0;
+	Client = 1;
+}
+
+message Hello {
+	ConnectionType ConnectionType = 1;
+}

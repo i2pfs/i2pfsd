@@ -1,0 +1,8 @@
+syntax = "proto3";
+package s2cProtobuf;
+
+message Ping {
+	int64 PingId = 1;
+	int64 PacketId = 2;
+	bytes Data = 3;
+}
