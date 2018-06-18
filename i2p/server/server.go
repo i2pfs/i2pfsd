@@ -61,19 +61,19 @@ func peersFileAddAddr(peersFilePath string, addr sam3.I2PAddr) error {
 		file.Close()
 
 		if err = scanner.Err(); err != nil {
-			return errors.CannotParseFile.SetArgs("peersFileAddAddr", err)
+			return errors.CannotParseFile.New(nil, "peersFileAddAddr")
 		}
 	}
 
 	f, err := os.OpenFile(peersFilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		return errors.CannotOpenFile.SetArgs("peersFileAddAddr[append]", peersFilePath, err)
+		return errors.CannotOpenFile.New(err, "peersFileAddAddr[append]", peersFilePath)
 	}
 	defer f.Close()
 
 	text := addrString+"\n"
 	if _, err = f.WriteString(text); err != nil {
-		return errors.CannotWriteToFile.SetArgs("peersFileAddAddr", peersFilePath, err, text)
+		return errors.CannotWriteToFile.New(err, "peersFileAddAddr", peersFilePath, text)
 	}
 
 	return nil
@@ -83,31 +83,31 @@ func Start(samUrl, peersFilePath, keysFilePath string) error {
 	log.Debugln("Server: NewSAM")
 	sam, err := sam3.NewSAM(samUrl)
 	if err != nil {
-		return errors.UnableToConnect.SetArgs("i2p/server/server.go:Start():NewSAM()", err, samUrl)
+		return errors.UnableToConnect.New(err, "i2p/server/server.go:Start():NewSAM()", samUrl)
 	}
 
 	log.Debugln("Server: EnsureKeyfile")
 	keys, err := sam.EnsureKeyfile(keysFilePath)
 	if err != nil {
-		return errors.UnableToGetKey.SetArgs("i2p/server/server.go:Start():EnsureKeyfile()", err, keysFilePath)
+		return errors.UnableToGetKey.New(err, "i2p/server/server.go:Start():EnsureKeyfile()", keysFilePath)
 	}
 
 	log.Debugln("Server: NewStreamSession")
 	streamSession, err := sam.NewStreamSession("i2pfsd", keys, sam3.Options_Medium)
 	if err != nil {
-		return errors.UnableToStartSession.SetArgs("i2p/server/server.go:Start():NewStreamSession()", err)
+		return errors.UnableToStartSession.New(err, "i2p/server/server.go:Start():NewStreamSession()")
 	}
 
 	log.Debugln("Server: Adding me to the peers file if I'm not there")
 	err = peersFileAddAddr(peersFilePath, streamSession.Addr())
 	if err != nil {
-		return errors.CannotWriteToFile.SetArgs("i2p/server/server.go:Start():peersFileAddAddr()", err, peersFilePath, streamSession.Addr())
+		return errors.CannotWriteToFile.New(err, "i2p/server/server.go:Start():peersFileAddAddr()", peersFilePath, streamSession.Addr())
 	}
 
 	log.Debugln("Server: Listen")
 	listener, err := streamSession.Listen()
 	if err != nil {
-		return errors.UnableToListen.SetArgs("i2p/server/server.go:Start():Listen()", err)
+		return errors.UnableToListen.New(err, "i2p/server/server.go:Start():Listen()")
 	}
 
 	go handleListener(listener)
