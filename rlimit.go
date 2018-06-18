@@ -17,7 +17,19 @@ func setRLimitNoFile(newLimit uint64) error {
 		return nil
 	}
 	limit.Cur = newLimit
+	oldMax := limit.Max
+	if limit.Max < limit.Cur {
+		limit.Max = limit.Cur
+	}
 	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit)
+	if err == syscall.EPERM {
+		if oldMax < limit.Max {
+			log.Warningf("No permission to increase the limit of open files (nofile)")
+			limit.Max = oldMax
+			limit.Cur = oldMax
+			err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit)
+		}
+	}
 	if err != nil {
 		log.Warningf("Got an error while syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit): %v", err)
 		return err
