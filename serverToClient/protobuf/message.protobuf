@@ -6,6 +6,8 @@ import "ping.protobuf";
 import "pong.protobuf";
 import "connect.protobuf";
 import "connected.protobuf";
+import "request_read.protobuf";
+import "request_write.protobuf";
 
 message Message {
 	int64 Id = 1;
@@ -15,5 +17,7 @@ message Message {
 		Pong Pong = 4;
 		Connect Connect = 5;
 		Connected Connected = 6;
+		RequestRead RequestRead = 7;
+		RequestWrite RequestWrite = 8;
 	};
 }

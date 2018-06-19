@@ -1,0 +1,6 @@
+syntax = "proto3";
+package s2cProtobuf;
+
+message RequestWrite {
+	string Path = 1;
+}

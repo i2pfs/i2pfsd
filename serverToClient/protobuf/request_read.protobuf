@@ -1,0 +1,11 @@
+syntax = "proto3";
+package s2cProtobuf;
+
+import "open_dir.protobuf";
+
+message RequestRead {
+	string Path = 1;
+	oneof RequestRead {
+		OpenDir OpenDir = 2;
+	};
+}

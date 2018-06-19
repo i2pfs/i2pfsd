@@ -35,13 +35,13 @@ func (conn *connection) SetMessageHandler(newHandler func(conn Connection, buf [
 func (conn *connection) Loop() {
 	buf := make([]byte, consts.MESSAGE_MAX_SIZE)
 	for {
-		log.Debugln("Server Connection: Read")
+		log.Debugln("Connection: Read")
 		n, err := conn.Read(buf)
 		if err != nil {
 			conn.Close()
 			return
 		}
-		log.Debugln("Server Connection: received: " + string(buf[:n]))
+		log.Debugln("Connection: received: " + string(buf[:n]))
 		err = conn.messageHandler(conn, buf[:n])
 		if err != nil {
 			conn.Close()
