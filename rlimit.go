@@ -10,8 +10,7 @@ func setRLimitNoFile(newLimit uint64) error {
 	var limit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit)
 	if err != nil {
-		log.Warningf("Got an error while syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit): %v", err)
-		return err
+		return log.WarningWrapper(nil, err, "Got an error while syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit)")
 	}
 	if limit.Cur >= newLimit {
 		return nil
@@ -31,8 +30,7 @@ func setRLimitNoFile(newLimit uint64) error {
 		}
 	}
 	if err != nil {
-		log.Warningf("Got an error while syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit): %v", err)
-		return err
+		return log.WarningWrapper(nil, err, "Got an error while syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit)")
 	}
 	return nil
 }

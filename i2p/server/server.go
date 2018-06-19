@@ -18,7 +18,7 @@ func helloMessageHandler(conn i2p.Connection, buf []byte) error {
 	hello := pb.Hello{}
 	err := hello.Unmarshal(buf)
 	if err != nil {
-		return err
+		return log.WarningWrapper(errors.UnableToParse, err, len(buf))
 	}
 	log.Debugln("hello connection: received hello: ", hello)
 	switch hello.ConnectionType {
@@ -29,7 +29,7 @@ func helloMessageHandler(conn i2p.Connection, buf []byte) error {
 		conn.SetMessageHandler(cServer.MessageHandler)
 		err = conn.SendMessage(cServer.HelloMessage(conn, hello))
 	}
-	return err
+	return log.WarningWrapper(errors.CannotSendData, err)
 }
 
 func handleListener(listener *sam3.StreamListener) {
@@ -61,19 +61,19 @@ func peersFileAddAddr(peersFilePath string, addr sam3.I2PAddr) error {
 		file.Close()
 
 		if err = scanner.Err(); err != nil {
-			return errors.CannotParseFile.New(nil, "peersFileAddAddr")
+			return log.WarningWrapper(errors.CannotParseFile, nil)
 		}
 	}
 
 	f, err := os.OpenFile(peersFilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		return errors.CannotOpenFile.New(err, "peersFileAddAddr[append]", peersFilePath)
+		return log.WarningWrapper(errors.CannotOpenFile, err, peersFilePath)
 	}
 	defer f.Close()
 
 	text := addrString+"\n"
 	if _, err = f.WriteString(text); err != nil {
-		return errors.CannotWriteToFile.New(err, "peersFileAddAddr", peersFilePath, text)
+		return log.WarningWrapper(errors.CannotWriteToFile, err, peersFilePath, text)
 	}
 
 	return nil
@@ -83,7 +83,7 @@ func Start(samUrl, peersFilePath, keysFilePath string) error {
 	log.Debugln("Server: NewSAM")
 	sam, err := sam3.NewSAM(samUrl)
 	if err != nil {
-		return errors.UnableToConnect.New(err, "i2p/server/server.go:Start():NewSAM()", samUrl)
+		return log.WarningWrapper(errors.UnableToConnect, err, samUrl)
 	}
 
 	log.Debugln("Server: EnsureKeyfile")
